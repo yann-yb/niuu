@@ -11,6 +11,7 @@ describe('ThemeProvider', () => {
   afterEach(() => {
     cleanup();
     delete document.documentElement.dataset.theme;
+    window.localStorage.clear();
   });
 
   it('defaults to ice and sets data-theme on documentElement', () => {
@@ -25,11 +26,11 @@ describe('ThemeProvider', () => {
 
   it('respects initial theme prop', () => {
     render(
-      <ThemeProvider theme="amber">
+      <ThemeProvider theme="light">
         <ThemeReader />
       </ThemeProvider>,
     );
-    expect(document.documentElement.dataset.theme).toBe('amber');
+    expect(document.documentElement.dataset.theme).toBe('light');
   });
 
   it('throws when useTheme is used outside the provider', () => {
@@ -37,5 +38,18 @@ describe('ThemeProvider', () => {
     console.error = () => {};
     expect(() => render(<ThemeReader />)).toThrow(/ThemeProvider/);
     console.error = originalError;
+  });
+
+  it('restores a saved theme', () => {
+    window.localStorage.setItem('niuu.theme', 'spring');
+
+    render(
+      <ThemeProvider theme="light">
+        <ThemeReader />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId('theme').textContent).toBe('spring');
+    expect(document.documentElement.dataset.theme).toBe('spring');
   });
 });

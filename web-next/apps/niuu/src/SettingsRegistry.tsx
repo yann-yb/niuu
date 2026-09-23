@@ -6,6 +6,7 @@ import {
   type NiuuConfig,
   type SettingsScope,
 } from '@niuulabs/plugin-sdk';
+import { ThemeSettings } from './ThemeSettings';
 import { resolveSettingsServiceBase } from './services';
 
 export interface RemoteSettingsOption {
@@ -104,6 +105,22 @@ export type MountedSettingsProvider =
     };
 
 const LOCAL_PROVIDERS: MountedSettingsProviderDescriptor[] = [
+  {
+    id: 'appearance',
+    pluginId: 'settings',
+    title: 'Appearance',
+    subtitle: 'theme and display preferences',
+    scope: 'user',
+    defaultSectionId: 'theme',
+    sections: [
+      {
+        id: 'theme',
+        label: 'Theme',
+        description: 'Choose how Niuu looks in this browser.',
+        render: () => <ThemeSettings />,
+      },
+    ],
+  },
   {
     id: 'storage',
     pluginId: 'volundr',

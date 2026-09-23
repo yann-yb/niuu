@@ -11,7 +11,7 @@ describe('niuuConfigSchema', () => {
 
   it('accepts a full config', () => {
     const parsed = niuuConfigSchema.parse({
-      theme: 'ice',
+      theme: 'light',
       plugins: {
         ting: { enabled: true, order: 4 },
         volundr: { enabled: false, order: 5, reason: 'k8s not provisioned' },
@@ -22,6 +22,7 @@ describe('niuuConfigSchema', () => {
     });
     expect(parsed.plugins.ting?.enabled).toBe(true);
     expect(parsed.plugins.volundr?.enabled).toBe(false);
+    expect(parsed.theme).toBe('light');
     expect(parsed.services.ting?.baseUrl).toBe('https://api.niuu.world/ting');
   });
 

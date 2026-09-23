@@ -402,3 +402,65 @@ kbd {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* Codex-like light surfaces with a neutral, high-contrast gray accent. */
+  /* Low-number brand tokens are also used directly as text by legacy plugins. */
+  --brand-100: #0f172a;
+  --brand-200: #1e293b;
+  --brand-300: #334155;
+  --brand-400: #475569;
+  --brand-500: #64748b;
+  --brand-600: #475569;
+  --brand-700: #334155;
+  --brand-800: #1e293b;
+  --brand-900: #0f172a;
+  --color-brand: var(--brand-700);
+
+  --color-bg-primary: #f8fafc;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #f1f5f9;
+  --color-bg-elevated: #e2e8f0;
+
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  --color-text-faint: #94a3b8;
+
+  --color-border: #cbd5e1;
+  --color-border-subtle: #e2e8f0;
+
+  --color-critical-fg: #b91c1c;
+  --color-gate-fg: #6d28d9;
+
+  --status-healthy: #047857;
+  --status-running: #0369a1;
+  --status-observing: #0369a1;
+  --status-merged: #047857;
+  --status-attention: #b45309;
+  --status-review: #b45309;
+  --status-queued: #475569;
+  --status-processing: #075985;
+  --status-deciding: #075985;
+
+  --ice-panel: color-mix(in srgb, var(--color-bg-secondary) 88%, transparent);
+  --ice-glow: 0 0 14px color-mix(in srgb, var(--brand-600) 14%, transparent);
+
+  --ops-surface-1: #ffffff;
+  --ops-surface-2: #f8fafc;
+  --ops-surface-3: #f1f5f9;
+  --ops-surface-accent: #f1f5f9;
+  --ops-surface-ink: #e2e8f0;
+  --ops-border-1: rgba(71, 85, 105, 0.18);
+  --ops-border-2: rgba(71, 85, 105, 0.26);
+  --ops-border-strong: rgba(71, 85, 105, 0.45);
+  --ops-border-soft: rgba(71, 85, 105, 0.12);
+  --ops-fill-muted: #e2e8f0;
+  --ops-fill-brand: #475569;
+  --ops-text-strong: #0f172a;
+  --ops-text-body: #334155;
+  --ops-text-muted: #64748b;
+  --ops-text-faint: #94a3b8;
+}

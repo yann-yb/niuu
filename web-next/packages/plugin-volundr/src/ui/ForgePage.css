@@ -757,6 +757,26 @@
   padding: 8px 12px;
 }
 
+
+[data-theme='light'] .vol-forge__kind,
+[data-theme='light'] .vol-forge__launch-default {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+[data-theme='light'] .vol-forge__kind--primary,
+[data-theme='light'] .vol-forge__kind--edge,
+[data-theme='light'] .vol-forge__launch-default {
+  color: var(--color-brand);
+}
+
+[data-theme='light'] .vol-forge__metric-viz,
+[data-theme='light'] .vol-forge__panel-link:hover,
+[data-theme='light'] .vol-forge__launch-cta:hover,
+[data-theme='light'] .vol-forge__retry-btn {
+  color: var(--color-brand);
+}
+
 @media (max-width: 1500px) {
   .vol-forge__inflight-row {
     grid-template-columns: minmax(220px, 1.1fr) minmax(180px, 1fr) minmax(120px, 0.8fr) auto;

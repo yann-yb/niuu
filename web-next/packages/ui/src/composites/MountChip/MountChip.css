@@ -13,6 +13,10 @@
   white-space: nowrap;
 }
 
+[data-theme='light'] .niuu-mount-chip {
+  background: transparent;
+}
+
 /* ── Binding-role dot ─────────────────────────────────────────── */
 .niuu-mount-chip__dot {
   width: 6px;

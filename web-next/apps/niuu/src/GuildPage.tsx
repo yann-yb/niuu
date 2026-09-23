@@ -506,13 +506,13 @@ function InstanceCard({
       className={cn(
         'niuu:group niuu:flex niuu:h-full niuu:flex-col niuu:rounded-[18px] niuu:border niuu:bg-bg-secondary niuu:p-4 niuu:text-left niuu:transition-colors',
         selected
-          ? 'niuu:border-brand/45 niuu:bg-[#111b24] niuu:shadow-[0_0_0_1px_rgba(83,194,255,0.12)]'
-          : 'niuu:border-border-subtle niuu:hover:border-white/16',
+          ? 'niuu:border-brand/45 niuu:bg-brand/10 niuu:shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-brand)_18%,transparent)]'
+          : 'niuu:border-border-subtle niuu:hover:border-border',
       )}
       data-testid={`guild-instance-card-${instance.slug}`}
     >
       <div className="niuu:flex niuu:items-start niuu:gap-3">
-        <div className="niuu:flex niuu:h-10 niuu:w-10 niuu:flex-shrink-0 niuu:items-center niuu:justify-center niuu:rounded-[12px] niuu:border niuu:border-white/10 niuu:bg-bg-tertiary">
+        <div className="niuu:flex niuu:h-10 niuu:w-10 niuu:flex-shrink-0 niuu:items-center niuu:justify-center niuu:rounded-[12px] niuu:border niuu:border-border-subtle niuu:bg-bg-tertiary">
           <Rune glyph={meta.rune} size={16} className="niuu:text-brand" />
         </div>
         <div className="niuu:min-w-0 niuu:flex-1">
@@ -522,7 +522,7 @@ function InstanceCard({
               {instance.name}
             </h3>
             {instance.isDefault ? (
-              <span className="niuu:rounded-md niuu:bg-brand/12 niuu:px-1.5 niuu:py-0.5 niuu:font-mono niuu:text-[9px] niuu:uppercase niuu:tracking-[0.16em] niuu:text-brand">
+              <span className="guild-tone-chip niuu:rounded-md niuu:bg-brand/12 niuu:px-1.5 niuu:py-0.5 niuu:font-mono niuu:text-[9px] niuu:uppercase niuu:tracking-[0.16em] niuu:text-brand">
                 default
               </span>
             ) : null}
@@ -542,7 +542,7 @@ function InstanceCard({
       <div className="niuu:mt-3 niuu:flex niuu:flex-wrap niuu:items-center niuu:gap-2">
         <span
           className={cn(
-            'niuu:inline-flex niuu:items-center niuu:gap-1.5 niuu:rounded-full niuu:border niuu:px-2 niuu:py-1 niuu:font-mono niuu:text-[10px] niuu:uppercase niuu:tracking-[0.14em]',
+            'guild-tone-chip niuu:inline-flex niuu:items-center niuu:gap-1.5 niuu:rounded-full niuu:border niuu:px-2 niuu:py-1 niuu:font-mono niuu:text-[10px] niuu:uppercase niuu:tracking-[0.14em]',
             scope.tone,
           )}
         >
@@ -611,7 +611,7 @@ function GuildDetailRail({
     <aside className="niuu:sticky niuu:top-6 niuu:h-fit">
       <div className="niuu:rounded-[22px] niuu:border niuu:border-border-subtle niuu:bg-bg-secondary niuu:p-5">
         <div className="niuu:flex niuu:items-start niuu:gap-3">
-          <div className="niuu:flex niuu:h-10 niuu:w-10 niuu:flex-shrink-0 niuu:items-center niuu:justify-center niuu:rounded-[12px] niuu:border niuu:border-white/10 niuu:bg-bg-tertiary">
+          <div className="niuu:flex niuu:h-10 niuu:w-10 niuu:flex-shrink-0 niuu:items-center niuu:justify-center niuu:rounded-[12px] niuu:border niuu:border-border-subtle niuu:bg-bg-tertiary">
             <Rune glyph={meta.rune} size={16} className="niuu:text-brand" />
           </div>
           <div className="niuu:min-w-0 niuu:flex-1">
@@ -719,7 +719,7 @@ function GuildDetailRail({
                 <div className="niuu:min-w-0">
                   <div
                     className={cn(
-                      'niuu:inline-flex niuu:rounded-full niuu:px-2 niuu:py-1 niuu:font-mono niuu:text-[9px] niuu:uppercase niuu:tracking-[0.14em]',
+                      'guild-tone-chip niuu:inline-flex niuu:rounded-full niuu:border niuu:px-2 niuu:py-1 niuu:font-mono niuu:text-[9px] niuu:uppercase niuu:tracking-[0.14em]',
                       event.tone,
                     )}
                   >
@@ -869,11 +869,11 @@ function RegisterWizard({
                       className={cn(
                         'niuu:flex niuu:items-center niuu:gap-4 niuu:rounded-[12px] niuu:border niuu:bg-bg-tertiary niuu:p-4 niuu:text-left niuu:transition-colors',
                         selected
-                          ? 'niuu:border-brand niuu:bg-[#1d2832]'
-                          : 'niuu:border-transparent niuu:hover:border-white/10',
+                          ? 'niuu:border-brand niuu:bg-brand/10'
+                          : 'niuu:border-transparent niuu:hover:border-border',
                       )}
                     >
-                      <div className="niuu:flex niuu:h-11 niuu:w-11 niuu:items-center niuu:justify-center niuu:rounded-[10px] niuu:border niuu:border-white/15 niuu:bg-[#22303b]">
+                      <div className="niuu:flex niuu:h-11 niuu:w-11 niuu:items-center niuu:justify-center niuu:rounded-[10px] niuu:border niuu:border-border-subtle niuu:bg-bg-elevated">
                         <Rune glyph={option.rune} size={18} className="niuu:text-brand" />
                       </div>
                       <div className="niuu:min-w-0">
@@ -1097,8 +1097,8 @@ function RegisterWizard({
                         className={cn(
                           'niuu:rounded-[12px] niuu:border niuu:bg-bg-tertiary niuu:p-4 niuu:text-left niuu:transition-colors',
                           wizard.visibility === option.value
-                            ? 'niuu:border-brand niuu:bg-[#1d2832]'
-                            : 'niuu:border-transparent niuu:hover:border-white/10',
+                            ? 'niuu:border-brand niuu:bg-brand/10'
+                            : 'niuu:border-transparent niuu:hover:border-border',
                           disabled && 'niuu:cursor-not-allowed niuu:opacity-40',
                         )}
                       >

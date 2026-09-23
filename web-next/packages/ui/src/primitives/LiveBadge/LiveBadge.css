@@ -13,6 +13,13 @@
   border: 1px solid color-mix(in srgb, var(--brand-500) 30%, transparent);
 }
 
+
+[data-theme='light'] .niuu-live-badge {
+  border-color: var(--color-border-subtle);
+  background: transparent;
+  color: var(--color-brand);
+}
+
 .niuu-live-badge__dot {
   width: 6px;
   height: 6px;

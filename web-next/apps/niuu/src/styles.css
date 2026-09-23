@@ -33,3 +33,10 @@
     line-height: inherit;
   }
 }
+
+/* Guild tone chips use semantic colors in dark themes and neutral chrome in Light. */
+[data-theme='light'] .guild-tone-chip {
+  border-color: var(--color-border-subtle);
+  background: transparent;
+  color: var(--color-text-secondary);
+}

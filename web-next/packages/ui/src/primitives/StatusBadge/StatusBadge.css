@@ -59,6 +59,17 @@
   border-color: var(--color-gate-bo);
 }
 
+[data-theme='light'] .niuu-status-badge {
+  background: transparent;
+}
+
+[data-theme='light'] .niuu-status-badge--run,
+[data-theme='light'] .niuu-status-badge--ok,
+[data-theme='light'] .niuu-status-badge--warn {
+  color: var(--color-brand);
+  border-color: var(--color-border-subtle);
+}
+
 /* ── Pulse (for active states) ─────────────────────────── */
 
 .niuu-status-badge--pulse .niuu-status-badge__dot {

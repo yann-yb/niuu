@@ -19,6 +19,10 @@
   line-height: 1;
 }
 
+[data-theme='light'] .niuu-deploy-badge {
+  background: transparent;
+}
+
 /* Per-kind glyph tints */
 .niuu-deploy-badge--k8s .niuu-deploy-badge__glyph {
   color: var(--brand-300);

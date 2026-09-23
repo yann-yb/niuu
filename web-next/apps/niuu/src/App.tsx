@@ -193,7 +193,7 @@ export function App() {
 
   return (
     <ConfigProvider value={state.config}>
-      <ThemeProvider theme="ice">
+      <ThemeProvider theme={state.config.theme}>
         <QueryClientProvider client={queryClient}>
           <AppInner plugins={state.plugins} />
           <ReactQueryDevtools initialIsOpen={false} />

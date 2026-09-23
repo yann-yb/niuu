@@ -31,3 +31,11 @@
   color: var(--color-text-muted);
   background: transparent;
 }
+
+[data-theme='light'] .niuu-chip {
+  background: transparent;
+}
+
+[data-theme='light'] .niuu-chip--brand {
+  color: var(--color-brand);
+}
