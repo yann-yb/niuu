@@ -8,6 +8,7 @@ describe('volundrPlugin', () => {
       { id: 'forge', label: 'Forge', path: '/volundr/forge' },
       { id: 'sessions', label: 'Sessions', path: '/volundr/sessions' },
       { id: 'catalog', label: 'Catalog', path: '/volundr/catalog' },
+      { id: 'relay', label: 'Relay', path: '/volundr/relay' },
     ]);
   });
 
@@ -18,6 +19,7 @@ describe('volundrPlugin', () => {
 
     expect(paths).toContain('/volundr');
     expect(paths).toContain('/volundr/forge');
+    expect(paths).toContain('/volundr/relay');
     expect(paths).toContain('/volundr/sessions');
     expect(paths).toContain('/volundr/sessions/$sessionId');
     expect(paths).toContain('/volundr/catalog');

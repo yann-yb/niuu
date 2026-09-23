@@ -1403,6 +1403,7 @@ export function createMockVolundrService(): IVolundrService {
     },
 
     getConversationHistory: async () => ({ turns: [] }),
+    getSessionReport: async () => null,
     getWorkflowGates: async (sessionId) => workflowGates.get(sessionId) ?? [],
     resolveWorkflowGate: async (
       sessionId: string,

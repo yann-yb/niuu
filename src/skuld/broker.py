@@ -4170,6 +4170,7 @@ class Broker(
         metadata: dict[str, Any] | None = None,
         participant_id: str | None = None,
         deliver_to_transport: bool = True,
+        emit_broker_frame: bool = True,
     ) -> str:
         """Record and broadcast a human-originated room message."""
         if not content.strip():
@@ -4225,7 +4226,8 @@ class Broker(
         thread_id = _non_empty_str(metadata_payload.get("thread_id"))
         if thread_id:
             event["threadId"] = thread_id
-        await self._emit_broker_frame(event)
+        if emit_broker_frame:
+            await self._emit_broker_frame(event)
         if self._room_bridge is not None and participant is not None:
             for room_id in participant.room_ids:
                 await self._room_bridge.record_huddle_message(
@@ -4356,14 +4358,15 @@ class Broker(
     async def handle_resend_initial_prompt(
         self,
         *,
+        prompt: str | None = None,
         source: str = "external",
         metadata: dict[str, Any] | None = None,
     ) -> str:
         """Resend the configured initial prompt into an active room/flock session."""
         if self._room_bridge is None:
             raise RuntimeError("Room mode is not enabled")
-        prompt = self._settings.session.initial_prompt.strip()
-        if not prompt:
+        content = (prompt or self._settings.session.initial_prompt).strip()
+        if not content:
             raise ValueError("No initial prompt is configured")
 
         metadata_payload = {
@@ -4371,15 +4374,17 @@ class Broker(
             "resend_prompt": True,
             "initial_prompt": True,
         }
-        if self._has_workflow_trigger() and self._mesh_adapter is None:
+        has_workflow_trigger = self._has_workflow_trigger()
+        if has_workflow_trigger and self._mesh_adapter is None:
             raise RuntimeError("Workflow mesh is not available")
         message_id = await self.handle_human_room_message(
-            prompt,
+            content,
             source=source,
             metadata=metadata_payload,
-            deliver_to_transport=not self._has_workflow_trigger(),
+            deliver_to_transport=not has_workflow_trigger,
+            emit_broker_frame=not has_workflow_trigger,
         )
-        if self._has_workflow_trigger():
+        if has_workflow_trigger:
             await self._publish_workflow_trigger()
         return message_id
 

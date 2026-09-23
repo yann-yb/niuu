@@ -186,3 +186,24 @@ async def test_get_session_transcript_reads_config_archive_without_workspace_loo
 
     assert response.status_code == 200
     assert response.json()["turns"][0]["content"] == "hello from archive"
+
+
+@pytest.mark.asyncio
+async def test_get_session_report_returns_workspace_markdown(
+    repository, storage, session_service, archive_service
+):
+    session = await _seed_workspace(storage, repository)
+    workspace = storage.resolve_session_workspace_path(str(session.id))
+    assert workspace is not None
+    report = Path(workspace) / "research" / "campaigns" / "daily" / "report.md"
+    report.parent.mkdir(parents=True)
+    report.write_text("# Engineering brief", encoding="utf-8")
+    client = TestClient(build_app(session_service, archive_service))
+
+    response = client.get(f"/api/v1/forge/sessions/{session.id}/report")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "path": "research/campaigns/daily/report.md",
+        "content": "# Engineering brief",
+    }

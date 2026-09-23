@@ -288,12 +288,46 @@ export interface WorkflowLaunchResult {
   clusterName: string;
 }
 
+export interface WorkflowSchedule {
+  id: string;
+  workflowId: string;
+  cronExpression: string;
+  timezone: string;
+  prompt: string;
+  sessionName?: string;
+  repo: string;
+  branch: string;
+  connectionId?: string;
+  enabled: boolean;
+  nextRunAt: string;
+  lastRunAt?: string;
+  lastSessionId?: string;
+  lastStatus?: string;
+  lastError?: string;
+}
+
+export interface CreateWorkflowScheduleRequest {
+  workflowId: string;
+  cronExpression: string;
+  timezone: string;
+  prompt: string;
+  sessionName?: string;
+  repo?: string;
+  branch?: string;
+  connectionId?: string;
+  enabled?: boolean;
+}
+
 export interface IWorkflowService {
   listWorkflows(): Promise<Workflow[]>;
   getWorkflow(id: string): Promise<Workflow | null>;
   saveWorkflow(workflow: Workflow): Promise<Workflow>;
   deleteWorkflow(id: string): Promise<void>;
   launchWorkflow(workflowId: string, request: WorkflowLaunchRequest): Promise<WorkflowLaunchResult>;
+  listSchedules?(): Promise<WorkflowSchedule[]>;
+  createSchedule?(request: CreateWorkflowScheduleRequest): Promise<WorkflowSchedule>;
+  deleteSchedule?(id: string): Promise<void>;
+  runSchedule?(id: string): Promise<WorkflowLaunchResult>;
 }
 
 export interface CreateResearchCampaignRequest {

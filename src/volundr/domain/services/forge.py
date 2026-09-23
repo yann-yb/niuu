@@ -414,6 +414,11 @@ class ForgeService:
             raise RuntimeError("Session archive service not available")
         return await self._archive_service.get_transcript(session_id)
 
+    async def get_report(self, session_id: UUID) -> dict[str, str]:
+        if self._archive_service is None:
+            raise RuntimeError("Session archive service not available")
+        return await self._archive_service.get_report(session_id)
+
     async def durable_latest_seq(self, session_id: UUID) -> int:
         """Cheap durable-freshness signal (event-log MAX(seq), 0 when unavailable). Lets the read
         path cache the durable turn count and skip the expensive rebuild while it's unchanged."""

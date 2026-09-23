@@ -6,6 +6,7 @@ import { SessionsPage } from './ui/SessionsPage';
 import { VolundrSessionRoute, VolundrArchivedRoute } from './ui/routes';
 import { LaunchCatalogPage } from './ui/LaunchCatalogPage';
 import { HistoryPage } from './ui/HistoryPage';
+import { RelayPage } from './ui/RelayPage';
 
 export const volundrPlugin = definePlugin({
   id: 'volundr',
@@ -16,6 +17,7 @@ export const volundrPlugin = definePlugin({
     { id: 'forge', label: 'Forge', path: '/volundr/forge' },
     { id: 'sessions', label: 'Sessions', path: '/volundr/sessions' },
     { id: 'catalog', label: 'Catalog', path: '/volundr/catalog' },
+    { id: 'relay', label: 'Relay', path: '/volundr/relay' },
   ],
   routes: (rootRoute) => [
     createRoute({
@@ -38,6 +40,11 @@ export const volundrPlugin = definePlugin({
       getParentRoute: () => rootRoute,
       path: '/volundr/overview',
       component: VolundrPage,
+    }),
+    createRoute({
+      getParentRoute: () => rootRoute,
+      path: '/volundr/relay',
+      component: RelayPage,
     }),
     createRoute({
       getParentRoute: () => rootRoute,
@@ -128,6 +135,9 @@ export {
   type LiveSessionTab,
 } from './ui/LiveSessionDetailPage';
 export { SessionsPage } from './ui/SessionsPage';
+export { RelayPage } from './ui/RelayPage';
+export { buildRelayBoard, relaySessionPath, relaySessionTitle } from './application/relayBoard';
+export type { RelayLane, RelayLaneId } from './application/relayBoard';
 export { ForgePage } from './ui/ForgePage';
 export { StructuredLogViewer } from './ui/components/StructuredLogViewer';
 export { useSkuldChat } from './ui/hooks/useSkuldChat';

@@ -5896,6 +5896,41 @@ class TestBrokerRoomAdapter:
         transport.send_message.assert_awaited_once()
 
     @pytest.mark.asyncio
+    async def test_workflow_prompt_resend_emits_only_workflow_kickoff(self, tmp_path):
+        settings = SkuldSettings(
+            session={
+                "id": "workflow-session",
+                "workspace_dir": str(tmp_path),
+                "initial_prompt": "Run the scheduled workflow.",
+            },
+            transport="sdk",
+            room={"enabled": True},
+            workflow_trigger={
+                "enabled": True,
+                "node_id": "trigger-1",
+                "label": "Dispatch",
+                "source": "scheduled dispatch",
+                "event_type": "research.framed",
+            },
+        )
+        b = Broker(settings=settings)
+        b._mesh_adapter = MagicMock()
+        b._emit_broker_frame = AsyncMock()
+        b._publish_workflow_trigger = AsyncMock()
+
+        message_id = await b.handle_resend_initial_prompt(
+            prompt="Use the revised report format.",
+            source="ting-schedule",
+            metadata={"scheduled_run": True},
+        )
+
+        assert message_id
+        assert b._conversation_turns[-1].content == "Use the revised report format."
+        assert b._conversation_turns[-1].metadata["scheduled_run"] is True
+        b._emit_broker_frame.assert_not_awaited()
+        b._publish_workflow_trigger.assert_awaited_once()
+
+    @pytest.mark.asyncio
     async def test_transport_user_echo_does_not_duplicate_explicit_human_room_message(
         self, room_settings
     ):

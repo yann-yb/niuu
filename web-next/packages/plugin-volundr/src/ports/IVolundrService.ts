@@ -74,6 +74,11 @@ export interface VolundrConversationHistory {
   last_activity?: string;
 }
 
+export interface VolundrSessionReport {
+  path: string;
+  content: string;
+}
+
 export type PermissionAutoApprovalReason =
   'allowed' | 'disabled' | 'no_command' | 'denylist' | 'no_allowlist_match' | 'endpoint_error';
 
@@ -204,6 +209,7 @@ export interface IVolundrService {
 
   // Messaging
   getConversationHistory(sessionId: string): Promise<VolundrConversationHistory>;
+  getSessionReport(sessionId: string): Promise<VolundrSessionReport | null>;
   getWorkflowGates(sessionId: string): Promise<VolundrWorkflowGate[]>;
   resolveWorkflowGate(
     sessionId: string,

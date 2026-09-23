@@ -223,7 +223,15 @@ class SkuldChannel(ChannelPort):
                             await self._on_directed_message(content, metadata)
                 elif frame.get("type") == "collaboration.outcome" and self._on_directed_message:
                     event_type = str(frame.get("eventType") or "").strip()
-                    if event_type and matches_subscription(event_type, self._subscribes_to):
+                    fields = frame.get("fields")
+                    is_workflow_kickoff = isinstance(fields, dict) and bool(
+                        fields.get("workflow_kickoff_id")
+                    )
+                    if (
+                        event_type
+                        and not is_workflow_kickoff
+                        and matches_subscription(event_type, self._subscribes_to)
+                    ):
                         metadata = {
                             "room_outcome": True,
                             "event_type": event_type,

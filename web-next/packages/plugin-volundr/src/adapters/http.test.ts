@@ -855,6 +855,16 @@ describe('buildVolundrHttpAdapter', () => {
     expect(history.turns[0]?.visibility).toBe('internal');
   });
 
+  it('getSessionReport calls GET /sessions/:id/report', async () => {
+    const client = makeClient();
+    client.get.mockResolvedValue({ path: 'research/report.md', content: '# Daily briefing' });
+
+    const report = await buildVolundrHttpAdapter(client).getSessionReport('sess-1');
+
+    expect(client.get).toHaveBeenCalledWith('/sessions/sess-1/report');
+    expect(report).toEqual({ path: 'research/report.md', content: '# Daily briefing' });
+  });
+
   it('getWorkflowGates calls GET /sessions/:id/workflow/gates', async () => {
     const client = makeClient();
     client.get.mockResolvedValueOnce({

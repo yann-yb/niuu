@@ -717,6 +717,7 @@ class _DirectedRoomMessageRequest(BaseModel):
 class _ResendPromptRequest(BaseModel):
     """Request body for resending the configured initial prompt into a room."""
 
+    prompt: str | None = None
     source: str = "external"
     metadata: dict[str, Any] = Field(default_factory=dict)
 
@@ -844,6 +845,7 @@ async def resend_room_initial_prompt(body: _ResendPromptRequest) -> dict:
     """Resend the configured initial prompt into the active room/flock session."""
     try:
         message_id = await broker.handle_resend_initial_prompt(
+            prompt=body.prompt,
             source=body.source,
             metadata=body.metadata,
         )

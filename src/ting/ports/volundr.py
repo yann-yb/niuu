@@ -129,6 +129,27 @@ class VolundrPort(ABC):
     ) -> VolundrSession | None:
         raise NotImplementedError
 
+    async def resume_session(
+        self,
+        session_id: str,
+        *,
+        auth_token: str | None = None,
+        principal: Principal | None = None,
+    ) -> VolundrSession:
+        """Resume an existing session without changing its identity."""
+        raise NotImplementedError
+
+    async def rerun_workflow_session(
+        self,
+        session_id: str,
+        prompt: str,
+        *,
+        auth_token: str | None = None,
+        principal: Principal | None = None,
+    ) -> None:
+        """Dispatch the configured workflow again in an existing session."""
+        raise NotImplementedError
+
     @abstractmethod
     async def list_sessions(
         self,
@@ -236,6 +257,18 @@ class VolundrPort(ABC):
     ) -> None:
         """Stop a running Volundr session."""
         raise NotImplementedError
+
+    async def archive_session(
+        self,
+        session_id: str,
+        *,
+        auth_token: str | None = None,
+        principal: Principal | None = None,
+    ) -> None:
+        """Archive a session when the adapter supports durable archives."""
+        await self.stop_session(
+            session_id, auth_token=auth_token, principal=principal
+        )
 
     @abstractmethod
     async def list_integration_ids(

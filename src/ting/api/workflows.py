@@ -20,10 +20,13 @@ from ting.adapters.inbound.auth import extract_bearer_token, extract_principal
 from ting.api.dispatch import resolve_volundr_factory
 from ting.domain.models import WorkflowDefinition, WorkflowScope
 from ting.domain.services.dispatch_service import _resolve_workflow_execution
+from ting.domain.services.workflow_scheduler import WorkflowScheduler
 from ting.domain.utils import _session_name, _slugify
+from ting.domain.workflow_schedule import WorkflowSchedule, next_cron_occurrence
 from ting.domain.workflow_snapshot import build_workflow_snapshot, workflow_mimir_from_snapshot
 from ting.ports.volundr import SpawnRequest, VolundrFactory, VolundrPort, VolundrSession
 from ting.ports.workflow_repository import WorkflowRepository
+from ting.ports.workflow_schedule_repository import WorkflowScheduleRepository
 
 _DEFAULT_WORKFLOW_LAUNCH_DEFINITION = "skuldCodex"
 
@@ -113,6 +116,40 @@ class WorkflowLaunchResponse(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class WorkflowScheduleBody(BaseModel):
+    workflow_id: UUID = Field(alias="workflowId")
+    cron_expression: str = Field(min_length=1, max_length=255, alias="cronExpression")
+    timezone: str = Field(default="UTC", min_length=1, max_length=255)
+    prompt: str = Field(min_length=1, max_length=100_000)
+    session_name: str | None = Field(default=None, max_length=63, alias="sessionName")
+    repo: str = Field(default="", max_length=500)
+    branch: str = Field(default="", max_length=255)
+    connection_id: str | None = Field(default=None, max_length=255, alias="connectionId")
+    enabled: bool = True
+
+    model_config = {"populate_by_name": True}
+
+
+class WorkflowScheduleResponse(BaseModel):
+    id: UUID
+    workflow_id: UUID = Field(serialization_alias="workflowId")
+    cron_expression: str = Field(serialization_alias="cronExpression")
+    timezone: str
+    prompt: str
+    session_name: str | None = Field(serialization_alias="sessionName")
+    repo: str
+    branch: str
+    connection_id: str | None = Field(serialization_alias="connectionId")
+    enabled: bool
+    next_run_at: datetime = Field(serialization_alias="nextRunAt")
+    last_run_at: datetime | None = Field(serialization_alias="lastRunAt")
+    last_session_id: str | None = Field(serialization_alias="lastSessionId")
+    last_status: str | None = Field(serialization_alias="lastStatus")
+    last_error: str | None = Field(serialization_alias="lastError")
+
+    model_config = {"populate_by_name": True}
+
+
 @dataclass(frozen=True)
 class WorkflowLaunchExecution:
     workflow: WorkflowDefinition
@@ -132,6 +169,20 @@ async def resolve_workflow_repo() -> WorkflowRepository:
     )
 
 
+async def resolve_workflow_schedule_repo() -> WorkflowScheduleRepository:
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Workflow schedule repository not configured",
+    )
+
+
+async def resolve_workflow_scheduler() -> WorkflowScheduler:
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Workflow scheduler not configured",
+    )
+
+
 def create_workflows_router() -> APIRouter:
     router = APIRouter(prefix="/api/v1/ting/workflows", tags=["Workflows"])
 
@@ -147,6 +198,88 @@ def create_workflows_router() -> APIRouter:
             scope=scope_filter,
         )
         return [_to_response(workflow) for workflow in workflows]
+
+    @router.get("/schedules", response_model=list[WorkflowScheduleResponse])
+    async def list_workflow_schedules(
+        principal: Principal = Depends(extract_principal),
+        schedules: WorkflowScheduleRepository = Depends(resolve_workflow_schedule_repo),
+    ) -> list[WorkflowScheduleResponse]:
+        items = await schedules.list_schedules(principal.user_id)
+        return [_schedule_response(item) for item in items]
+
+    @router.post(
+        "/schedules",
+        response_model=WorkflowScheduleResponse,
+        status_code=status.HTTP_201_CREATED,
+    )
+    async def create_workflow_schedule(
+        body: WorkflowScheduleBody,
+        principal: Principal = Depends(extract_principal),
+        workflows: WorkflowRepository = Depends(resolve_workflow_repo),
+        schedules: WorkflowScheduleRepository = Depends(resolve_workflow_schedule_repo),
+    ) -> WorkflowScheduleResponse:
+        workflow = await workflows.get_workflow(body.workflow_id)
+        if workflow is None or not _can_view_workflow(workflow, principal):
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        now = datetime.now(UTC)
+        try:
+            next_run_at = next_cron_occurrence(body.cron_expression, body.timezone, now)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        saved = await schedules.save_schedule(
+            WorkflowSchedule(
+                id=uuid4(),
+                workflow_id=body.workflow_id,
+                owner_id=principal.user_id,
+                tenant_id=principal.tenant_id,
+                cron_expression=body.cron_expression,
+                timezone=body.timezone,
+                prompt=body.prompt,
+                session_name=body.session_name,
+                repo=body.repo,
+                branch=body.branch,
+                connection_id=body.connection_id,
+                enabled=body.enabled,
+                next_run_at=next_run_at,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        return _schedule_response(saved)
+
+    @router.delete("/schedules/{schedule_id}", status_code=status.HTTP_204_NO_CONTENT)
+    async def delete_workflow_schedule(
+        schedule_id: UUID,
+        principal: Principal = Depends(extract_principal),
+        schedules: WorkflowScheduleRepository = Depends(resolve_workflow_schedule_repo),
+    ) -> None:
+        if not await schedules.delete_schedule(schedule_id, principal.user_id):
+            raise HTTPException(status_code=404, detail="Workflow schedule not found")
+
+    @router.post("/schedules/{schedule_id}/run", response_model=WorkflowLaunchResponse)
+    async def run_workflow_schedule(
+        schedule_id: UUID,
+        principal: Principal = Depends(extract_principal),
+        schedules: WorkflowScheduleRepository = Depends(resolve_workflow_schedule_repo),
+        scheduler: WorkflowScheduler = Depends(resolve_workflow_scheduler),
+        workflows: WorkflowRepository = Depends(resolve_workflow_repo),
+    ) -> WorkflowLaunchResponse:
+        schedule = await schedules.get_schedule(schedule_id)
+        if schedule is None or schedule.owner_id != principal.user_id:
+            raise HTTPException(status_code=404, detail="Workflow schedule not found")
+        workflow = await workflows.get_workflow(schedule.workflow_id)
+        if workflow is None:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        session_id, launch_status = await scheduler.run_schedule(schedule)
+        return WorkflowLaunchResponse(
+            workflow_id=str(workflow.id),
+            workflow_name=workflow.name,
+            slug=_slugify(schedule.session_name or schedule.prompt)[:96] or "workflow",
+            session_id=session_id,
+            session_name=schedule.session_name or workflow.name,
+            status=launch_status,
+            cluster_name="",
+        )
 
     @router.get("/{workflow_id}", response_model=WorkflowResponse)
     async def get_workflow(
@@ -306,6 +439,26 @@ def _to_response(workflow: WorkflowDefinition) -> WorkflowResponse:
         ],
         created_at=workflow.created_at,
         updated_at=workflow.updated_at,
+    )
+
+
+def _schedule_response(schedule: WorkflowSchedule) -> WorkflowScheduleResponse:
+    return WorkflowScheduleResponse(
+        id=schedule.id,
+        workflow_id=schedule.workflow_id,
+        cron_expression=schedule.cron_expression,
+        timezone=schedule.timezone,
+        prompt=schedule.prompt,
+        session_name=schedule.session_name,
+        repo=schedule.repo,
+        branch=schedule.branch,
+        connection_id=schedule.connection_id,
+        enabled=schedule.enabled,
+        next_run_at=schedule.next_run_at,
+        last_run_at=schedule.last_run_at,
+        last_session_id=schedule.last_session_id,
+        last_status=schedule.last_status,
+        last_error=schedule.last_error,
     )
 
 

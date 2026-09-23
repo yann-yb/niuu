@@ -1036,6 +1036,27 @@ def test_update_session_proxies_put_rename_to_owner_with_body() -> None:
 
 
 @respx.mock
+@respx.mock
+def test_session_report_proxies_to_owner() -> None:
+    client = _client([_instance("beta", base_url="http://beta")])
+    respx.get("http://beta/api/v1/forge/sessions/s2").mock(
+        return_value=Response(200, json={"id": "s2"})
+    )
+    route = respx.get("http://beta/api/v1/forge/sessions/s2/report").mock(
+        return_value=Response(
+            200,
+            json={"path": "research/report.md", "content": "# Daily briefing"},
+        )
+    )
+
+    response = client.get("/api/v1/forge/sessions/s2/report", headers=_headers())
+
+    assert response.status_code == 200
+    assert response.json()["content"] == "# Daily briefing"
+    assert route.called
+
+
+@respx.mock
 def test_proxy_routes_fall_back_to_empty_payloads_when_remote_returns_non_dict_content() -> None:
     client = _client([_instance("beta", base_url="http://beta")])
     respx.get("http://beta/api/v1/forge/sessions/s2").mock(

@@ -383,6 +383,77 @@ class TestGetSession:
 
 
 # -------------------------------------------------------------------
+# resume_session
+# -------------------------------------------------------------------
+
+
+class TestResumeSession:
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_resumes_same_session(self, adapter: VolundrHTTPAdapter):
+        route = respx.post(f"{SESSIONS_URL}/ses-1/resume").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "id": "ses-1",
+                    "name": "daily-scan",
+                    "status": "running",
+                    "chat_endpoint": "ws://127.0.0.1:8080/s/ses-1/session",
+                    "source": {"type": "local_mount", "local_path": "/workspace"},
+                },
+            )
+        )
+
+        session = await adapter.resume_session("ses-1", auth_token="pat-abc")
+
+        assert session.id == "ses-1"
+        assert session.status == "running"
+        assert session.repo == "/workspace"
+        assert session.chat_endpoint == "ws://volundr.test:8000/s/ses-1/session"
+        assert route.calls[0].request.headers["Authorization"] == "Bearer pat-abc"
+
+
+# -------------------------------------------------------------------
+# rerun_workflow_session
+# -------------------------------------------------------------------
+
+
+class TestRerunWorkflowSession:
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_resends_initial_prompt_through_same_session(self, adapter: VolundrHTTPAdapter):
+        respx.get(f"{SESSIONS_URL}/ses-1").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "id": "ses-1",
+                    "name": "daily-scan",
+                    "status": "running",
+                    "chat_endpoint": "ws://volundr.test:8000/s/ses-1/session",
+                },
+            )
+        )
+        respx.get("http://volundr.test:8000/s/ses-1/health").mock(
+            return_value=httpx.Response(200, json={"status": "healthy"})
+        )
+        route = respx.post("http://volundr.test:8000/s/ses-1/api/room/resend-prompt").mock(
+            return_value=httpx.Response(200, json={"status": "sent"})
+        )
+
+        await adapter.rerun_workflow_session(
+            "ses-1", "Use the current report format.", auth_token="pat-abc"
+        )
+
+        body = json.loads(route.calls[0].request.content)
+        assert body == {
+            "source": "ting-schedule",
+            "metadata": {"scheduled_run": True},
+            "prompt": "Use the current report format.",
+        }
+        assert route.calls[0].request.headers["Authorization"] == "Bearer pat-abc"
+
+
+# -------------------------------------------------------------------
 # list_sessions
 # -------------------------------------------------------------------
 
@@ -676,6 +747,19 @@ class TestStopSession:
 
         sent = route.calls[0].request
         assert sent.headers["Authorization"] == "Bearer runtime-token"
+
+
+class TestArchiveSession:
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_success(self, adapter: VolundrHTTPAdapter):
+        route = respx.patch(f"{SESSIONS_URL}/ses-1/archive").mock(
+            return_value=httpx.Response(200, json={"id": "ses-1"})
+        )
+
+        await adapter.archive_session("ses-1")
+
+        assert route.called
 
 
 class TestIntegrationsAndRepos:

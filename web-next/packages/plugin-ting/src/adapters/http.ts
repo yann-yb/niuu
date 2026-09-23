@@ -24,6 +24,7 @@ import type {
   IWorkflowService,
   WorkflowLaunchRequest,
   WorkflowLaunchResult,
+  WorkflowSchedule,
   IResearchService,
   ISpecsService,
   CreateResearchCampaignRequest,
@@ -287,6 +288,33 @@ interface RawWorkflowLaunchResult {
   status: string;
   clusterName?: string;
   cluster_name?: string;
+}
+
+interface RawWorkflowSchedule {
+  id: string;
+  workflowId?: string;
+  workflow_id?: string;
+  cronExpression?: string;
+  cron_expression?: string;
+  timezone: string;
+  prompt: string;
+  sessionName?: string | null;
+  session_name?: string | null;
+  repo: string;
+  branch: string;
+  connectionId?: string | null;
+  connection_id?: string | null;
+  enabled: boolean;
+  nextRunAt?: string;
+  next_run_at?: string;
+  lastRunAt?: string | null;
+  last_run_at?: string | null;
+  lastSessionId?: string | null;
+  last_session_id?: string | null;
+  lastStatus?: string | null;
+  last_status?: string | null;
+  lastError?: string | null;
+  last_error?: string | null;
 }
 
 interface RawCampaignStageState {
@@ -740,6 +768,26 @@ function toWorkflowLaunchResult(raw: RawWorkflowLaunchResult): WorkflowLaunchRes
     sessionName: raw.sessionName ?? raw.session_name ?? '',
     status: raw.status,
     clusterName: raw.clusterName ?? raw.cluster_name ?? '',
+  };
+}
+
+function toWorkflowSchedule(raw: RawWorkflowSchedule): WorkflowSchedule {
+  return {
+    id: raw.id,
+    workflowId: raw.workflowId ?? raw.workflow_id ?? '',
+    cronExpression: raw.cronExpression ?? raw.cron_expression ?? '',
+    timezone: raw.timezone,
+    prompt: raw.prompt,
+    sessionName: raw.sessionName ?? raw.session_name ?? undefined,
+    repo: raw.repo,
+    branch: raw.branch,
+    connectionId: raw.connectionId ?? raw.connection_id ?? undefined,
+    enabled: raw.enabled,
+    nextRunAt: raw.nextRunAt ?? raw.next_run_at ?? '',
+    lastRunAt: raw.lastRunAt ?? raw.last_run_at ?? undefined,
+    lastSessionId: raw.lastSessionId ?? raw.last_session_id ?? undefined,
+    lastStatus: raw.lastStatus ?? raw.last_status ?? undefined,
+    lastError: raw.lastError ?? raw.last_error ?? undefined,
   };
 }
 
@@ -1290,6 +1338,28 @@ export function buildWorkflowHttpAdapter(client: ApiClient): IWorkflowService {
       const raw = await client.post<RawWorkflowLaunchResult>(
         `/workflows/${encodeURIComponent(workflowId)}/launch`,
         toWorkflowLaunchBody(request),
+      );
+      return toWorkflowLaunchResult(raw);
+    },
+
+    async listSchedules() {
+      const raw = await client.get<RawWorkflowSchedule[]>('/workflows/schedules');
+      return raw.map(toWorkflowSchedule);
+    },
+
+    async createSchedule(request) {
+      const raw = await client.post<RawWorkflowSchedule>('/workflows/schedules', request);
+      return toWorkflowSchedule(raw);
+    },
+
+    async deleteSchedule(id: string) {
+      await client.delete<void>('/workflows/schedules/' + encodeURIComponent(id));
+    },
+
+    async runSchedule(id: string) {
+      const raw = await client.post<RawWorkflowLaunchResult>(
+        '/workflows/schedules/' + encodeURIComponent(id) + '/run',
+        {},
       );
       return toWorkflowLaunchResult(raw);
     },

@@ -1582,6 +1582,30 @@ def create_volundr_router(
             payload["_prep"] = prep
         return payload if isinstance(payload, dict) else {"turns": []}
 
+    @router.get("/sessions/{session_id}/report")
+    async def get_session_report(
+        request: Request,
+        session_id: str = Path(description="Volundr session identifier"),
+        principal: Principal = Depends(extract_principal),
+    ) -> dict[str, Any]:
+        instance, _ = await _find_session_owner(
+            service,
+            principal,
+            request,
+            session_id,
+            embedded_app=embedded_forge_app,
+        )
+        response = await _request_remote(
+            instance,
+            request,
+            method="GET",
+            path=f"/sessions/{session_id}/report",
+            embedded_app=embedded_forge_app,
+        )
+        _ensure_remote_success(response)
+        payload = response.json()
+        return payload if isinstance(payload, dict) else {}
+
     @router.get("/sessions/{session_id}/tool-result/{tool_use_id}")
     async def get_tool_result(
         request: Request,

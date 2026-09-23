@@ -78,7 +78,10 @@ from ting.api.tracker import (
     create_tracker_router,
     resolve_trackers,
 )
-from ting.api.workflows import create_workflows_router, resolve_workflow_repo
+from ting.api.workflows import (
+    create_workflows_router,
+    resolve_workflow_repo,
+)
 from ting.config import Settings
 from ting.domain.services.activity_subscriber import SessionActivitySubscriber
 from ting.domain.services.dispatch_service import (
@@ -616,6 +619,110 @@ def create_app(
 
             app.dependency_overrides[resolve_workflow_repo] = _resolve_workflow_repo
 
+            from ting.adapters.postgres_workflow_schedules import (
+                PostgresWorkflowScheduleRepository,
+            )
+            from ting.api.workflows import (
+                WorkflowLaunchBody,
+                launch_workflow_execution,
+                resolve_workflow_schedule_repo,
+                resolve_workflow_scheduler,
+            )
+            from ting.domain.services.workflow_scheduler import WorkflowScheduler
+
+            workflow_schedule_repo = PostgresWorkflowScheduleRepository(pool)
+            app.state.workflow_schedule_repo = workflow_schedule_repo
+
+            async def _resolve_workflow_schedule_repo():
+                return workflow_schedule_repo
+
+            async def _launch_scheduled_workflow(schedule):
+                workflow = await workflow_repo.get_workflow(schedule.workflow_id)
+                if workflow is None:
+                    raise RuntimeError(f"Workflow not found: {schedule.workflow_id}")
+                principal = Principal(
+                    user_id=schedule.owner_id,
+                    email="",
+                    tenant_id=schedule.tenant_id,
+                    roles=[],
+                )
+
+                scheduled_request = Request(
+                    {
+                        "type": "http",
+                        "method": "POST",
+                        "path": "/api/v1/ting/workflows/scheduled-launch",
+                        "headers": [],
+                        "query_string": b"",
+                        "scheme": "http",
+                        "server": ("localhost", 80),
+                        "client": None,
+                        "app": app,
+                    }
+                )
+                execution = await launch_workflow_execution(
+                    request=scheduled_request,
+                    workflow=workflow,
+                    launch=WorkflowLaunchBody(
+                        prompt=schedule.prompt,
+                        sessionName=schedule.session_name,
+                        repo=schedule.repo,
+                        branch=schedule.branch,
+                        connectionId=schedule.connection_id,
+                        provenance={
+                            "trigger": "schedule",
+                            "schedule_id": str(schedule.id),
+                        },
+                    ),
+                    volundr_factory=app.state.volundr_factory,
+                    principal=principal,
+                )
+                return execution.session.id, execution.session.status
+
+            async def _reuse_scheduled_workflow_session(schedule, session_id):
+                principal = Principal(
+                    user_id=schedule.owner_id,
+                    email="",
+                    tenant_id=schedule.tenant_id,
+                    roles=[],
+                )
+                if schedule.connection_id:
+                    adapter = await app.state.volundr_factory.for_connection(
+                        schedule.owner_id, schedule.connection_id
+                    )
+                else:
+                    adapter = await app.state.volundr_factory.primary_for_owner(schedule.owner_id)
+                if adapter is None:
+                    raise RuntimeError(
+                        f"Volundr connection unavailable for scheduled session {session_id}"
+                    )
+                await adapter.resume_session(
+                    session_id,
+                    principal=principal,
+                )
+                await adapter.rerun_workflow_session(
+                    session_id,
+                    schedule.prompt,
+                    principal=principal,
+                )
+                return "running"
+
+            workflow_scheduler = WorkflowScheduler(
+                workflow_schedule_repo,
+                _launch_scheduled_workflow,
+                _reuse_scheduled_workflow_session,
+            )
+            app.state.workflow_scheduler = workflow_scheduler
+
+            async def _resolve_workflow_scheduler():
+                return workflow_scheduler
+
+            app.dependency_overrides[resolve_workflow_schedule_repo] = (
+                _resolve_workflow_schedule_repo
+            )
+            app.dependency_overrides[resolve_workflow_scheduler] = _resolve_workflow_scheduler
+            await workflow_scheduler.start()
+
             workflow_campaign_repo = PostgresWorkflowCampaignRepository(pool)
             app.state.workflow_campaign_repo = workflow_campaign_repo
 
@@ -1014,6 +1121,7 @@ def create_app(
             yield
 
             # Lifecycle cleanup
+            await workflow_scheduler.stop()
             if ravn_help_needed_handler is not None:
                 await ravn_help_needed_handler.stop()
             if ravn_outcome_handler is not None:

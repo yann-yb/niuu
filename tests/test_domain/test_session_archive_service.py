@@ -653,3 +653,25 @@ async def test_download_rejects_archive_store_artifact_outside_root(
 
     with pytest.raises(ValueError, match="escapes configured root"):
         await archive_service.get_transcript_download_path(session.id, "md")
+
+
+@pytest.mark.asyncio
+async def test_session_archive_service_reads_primary_report(
+    storage, session_repository, session_service, archive_store
+):
+    session = Session(name="report", status=SessionStatus.STOPPED)
+    await session_repository.create(session)
+    await storage.create_session_workspace(str(session.id), user_id="u1", tenant_id="t1")
+    workspace_path = storage.resolve_session_workspace_path(str(session.id))
+    assert workspace_path is not None
+    campaign = Path(workspace_path) / "research" / "campaigns" / "daily"
+    (campaign / "notes").mkdir(parents=True)
+    (campaign / "notes" / "exploration.md").write_text("# Exploration", encoding="utf-8")
+    (campaign / "report.md").write_text("# Decision-ready report", encoding="utf-8")
+
+    archive_service = SessionArchiveService(session_service, storage, archive_store)
+
+    assert await archive_service.get_report(session.id) == {
+        "path": "research/campaigns/daily/report.md",
+        "content": "# Decision-ready report",
+    }

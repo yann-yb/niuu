@@ -23,6 +23,8 @@ INTEGRATIONS_PATH = "/api/v1/integrations"
 WORKFLOW_GATE_INTENT_HEADER = "x-niuu-workflow-gate-intent"
 WORKFLOW_GATE_INTENT_RESOLVE = "resolve"
 _LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1", "0.0.0.0"}
+SESSION_API_READY_RETRIES = 20
+SESSION_API_READY_DELAY_SECONDS = 0.25
 
 
 def _looks_like_local_path(value: str) -> bool:
@@ -209,6 +211,83 @@ class VolundrHTTPAdapter(VolundrPort):
                 activity_state=data.get("activity_state"),
                 activity_metadata=data.get("activity_metadata") or {},
             )
+
+    async def resume_session(
+        self,
+        session_id: str,
+        *,
+        auth_token: str | None = None,
+        principal: Principal | None = None,
+    ) -> VolundrSession:
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            resp = await client.post(
+                f"{self._base_url}{FORGE_SESSIONS_PATH}/{session_id}/resume",
+                headers=self._headers(auth_token, principal),
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            source = data.get("source") or {}
+            return VolundrSession(
+                id=data["id"],
+                name=data["name"],
+                status=data["status"],
+                tracker_issue_id=data.get("tracker_issue_id"),
+                chat_endpoint=_public_chat_endpoint(data.get("chat_endpoint"), self._base_url),
+                cluster_name=self._name,
+                repo=source.get("repo") or source.get("local_path", ""),
+                branch=source.get("branch", ""),
+                base_branch=source.get("base_branch", ""),
+                workload_type=data.get("workload_type", "default"),
+                activity_state=data.get("activity_state"),
+                activity_metadata=data.get("activity_metadata") or {},
+            )
+
+    async def rerun_workflow_session(
+        self,
+        session_id: str,
+        prompt: str,
+        *,
+        auth_token: str | None = None,
+        principal: Principal | None = None,
+    ) -> None:
+        session = await self.get_session(
+            session_id,
+            auth_token=auth_token,
+            principal=principal,
+        )
+        if session is None or not session.chat_endpoint:
+            raise LookupError(f"Session {session_id} has no active room endpoint")
+
+        base_url = _session_chat_base_url(session.chat_endpoint)
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            for attempt in range(SESSION_API_READY_RETRIES):
+                try:
+                    ready = await client.get(
+                        f"{base_url}/health",
+                        headers=self._headers(auth_token, principal),
+                    )
+                    ready.raise_for_status()
+                    break
+                except httpx.HTTPStatusError as exc:
+                    if exc.response.status_code not in {404, 502, 503}:
+                        raise
+                    if attempt + 1 == SESSION_API_READY_RETRIES:
+                        raise
+                except httpx.RequestError:
+                    if attempt + 1 == SESSION_API_READY_RETRIES:
+                        raise
+                await asyncio.sleep(SESSION_API_READY_DELAY_SECONDS)
+
+            resp = await client.post(
+                f"{base_url}/api/room/resend-prompt",
+                headers=self._headers(auth_token, principal),
+                json={
+                    "source": "ting-schedule",
+                    "metadata": {"scheduled_run": True},
+                    "prompt": prompt,
+                },
+            )
+            resp.raise_for_status()
 
     async def list_sessions(
         self,
@@ -405,6 +484,22 @@ class VolundrHTTPAdapter(VolundrPort):
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             resp = await client.delete(
                 f"{self._base_url}{FORGE_SESSIONS_PATH}/{session_id}",
+                headers=self._headers(auth_token, principal),
+            )
+            if resp.status_code == 404:
+                return
+            resp.raise_for_status()
+
+    async def archive_session(
+        self,
+        session_id: str,
+        *,
+        auth_token: str | None = None,
+        principal: Principal | None = None,
+    ) -> None:
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            resp = await client.patch(
+                f"{self._base_url}{FORGE_SESSIONS_PATH}/{session_id}/archive",
                 headers=self._headers(auth_token, principal),
             )
             if resp.status_code == 404:

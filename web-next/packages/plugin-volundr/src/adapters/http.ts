@@ -15,6 +15,7 @@ import type {
   IVolundrService,
   PermissionAutoApprovalDecision,
   VolundrConversationHistory,
+  VolundrSessionReport,
 } from '../ports/IVolundrService';
 import type { IFileSystemPort, FileTreeNode } from '../ports/IFileSystemPort';
 import type {
@@ -1612,6 +1613,14 @@ export function buildVolundrHttpAdapter(
       forgeClient
         .get<ConversationPayload>(`/sessions/${sessionId}/conversation`)
         .then(normalizeConversationHistory),
+    getSessionReport: async (sessionId) => {
+      try {
+        return await forgeClient.get<VolundrSessionReport>(`/sessions/${sessionId}/report`);
+      } catch (error) {
+        if (error instanceof Error && /404/.test(error.message)) return null;
+        throw error;
+      }
+    },
     getWorkflowGates: async (sessionId) => {
       const payload = await forgeClient.get<WorkflowGateListPayload>(
         `/sessions/${sessionId}/workflow/gates`,

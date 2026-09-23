@@ -65,6 +65,31 @@ class SessionArchiveService:
             f"No accessible workspace path for session {session_id}"
         )
 
+    async def get_report(self, session_id: UUID) -> dict[str, str]:
+        """Return the best Markdown deliverable produced in a session workspace."""
+        workspace = await self.resolve_workspace_dir(session_id)
+        patterns = (
+            "research/campaigns/*/report.md",
+            "research/campaigns/*/notes/exploration.md",
+        )
+        for pattern in patterns:
+            candidates = sorted(
+                workspace.glob(pattern),
+                key=lambda path: path.stat().st_mtime,
+                reverse=True,
+            )
+            for candidate in candidates:
+                relative = candidate.relative_to(workspace)
+                safe_path = resolve_contained_path(workspace, relative, strict=True)
+                if safe_path.is_file():
+                    return {
+                        "path": relative.as_posix(),
+                        "content": safe_path.read_text(encoding="utf-8"),
+                    }
+        raise SessionArchiveNotAvailableError(
+            f"No Markdown report artifact found for session {session_id}"
+        )
+
     async def latest_event_seq(self, session_id: UUID) -> int:
         """Cheap durable-freshness signal: the MAX(seq) of the session's event log (0 when none).
 

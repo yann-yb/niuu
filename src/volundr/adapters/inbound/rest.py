@@ -3446,6 +3446,33 @@ def create_router(
             )
 
     @router.get(
+        "/sessions/{session_id}/report",
+        tags=["Sessions"],
+        responses={404: {"model": ErrorResponse}, 503: {"model": ErrorResponse}},
+    )
+    async def get_session_report(
+        session_id: UUID = Path(description="Unique session identifier"),
+    ) -> dict[str, str]:
+        """Return the primary Markdown deliverable from workspace storage."""
+        try:
+            return await forge.get_report(session_id)
+        except LookupError:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session not found: {session_id}",
+            )
+        except SessionArchiveNotAvailableError as e:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e),
+            )
+        except RuntimeError as e:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=str(e),
+            )
+
+    @router.get(
         "/sessions/{session_id}/transcript/download",
         tags=["Sessions"],
         responses={
