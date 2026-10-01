@@ -291,7 +291,7 @@ export function TopologyScene3D({
           }
         : undefined;
       scene.scene.background = light
-        ? new Color(getComputedStyle(host).getPropertyValue('--color-bg-primary').trim())
+        ? new Color(styles.getPropertyValue('--color-bg-primary').trim())
         : darkBackground;
       originalBlending.forEach((blending, material) => {
         material.blending = light ? NormalBlending : blending;
@@ -666,26 +666,7 @@ export function TopologyScene3D({
 
       {canRender && (
         <>
-          <div
-            data-testid="camera-controls-3d"
-            style={{
-              position: 'absolute',
-              top: 12,
-              right: 12,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              background: 'var(--light-panel, rgba(9,9,11,0.82))',
-              border: '1px solid rgba(147,197,253,0.2)',
-              borderRadius: 8,
-              fontFamily: 'var(--font-mono, monospace)',
-              fontSize: 11,
-              color: 'var(--light-accent, rgba(186,230,253,0.8))',
-              userSelect: 'none',
-              overflow: 'hidden',
-              zIndex: 40,
-            }}
-          >
+          <div data-testid="camera-controls-3d" className="camera-controls">
             <button
               aria-label="Zoom in"
               onClick={() => dolly(1 / CAMERA3D.DOLLY_STEP)}

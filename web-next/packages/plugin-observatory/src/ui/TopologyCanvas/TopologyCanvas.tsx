@@ -752,26 +752,7 @@ export function TopologyCanvas({
       />
 
       {/* Camera controls — vertical pill stack, top-right (web2 parity) */}
-      <div
-        data-testid="camera-controls"
-        style={{
-          position: 'absolute',
-          top: 12,
-          right: 12,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          background: 'var(--light-panel, rgba(9,9,11,0.82))',
-          border: '1px solid rgba(147,197,253,0.2)',
-          borderRadius: 8,
-          fontFamily: 'var(--font-mono, monospace)',
-          fontSize: 11,
-          color: 'var(--light-accent, rgba(186,230,253,0.8))',
-          userSelect: 'none',
-          overflow: 'hidden',
-          zIndex: 40,
-        }}
-      >
+      <div data-testid="camera-controls" className="camera-controls">
         <button aria-label="Zoom in" onClick={zoomIn} className="camera-btn">
           +
         </button>

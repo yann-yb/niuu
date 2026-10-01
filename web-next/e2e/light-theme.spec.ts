@@ -93,6 +93,22 @@ test('borderless icon button opens all palettes and supports keyboard selection'
   await expect(picker).toBeFocused();
 });
 
+test('closing the theme picker by clicking a field preserves that field focus', async ({
+  page,
+}) => {
+  const search = page.getByPlaceholder('search by title, slug, question');
+  await page.getByRole('button', { name: 'Color theme', exact: true }).click();
+  await search.click();
+  await expect(page.locator('.niuu-shell__theme-option')).toHaveCount(0);
+  // Wait beyond the old deferred focus callback before checking outside focus.
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  await expect(search).toBeFocused();
+  await page.keyboard.type('theme');
+  await expect(search).toHaveValue('theme');
+});
+
 test('Forge badges have readable Light colors and retain their dark palette', async ({ page }) => {
   await page.goto('/volundr?config=default');
   await selectTheme(page, 'light');

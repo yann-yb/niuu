@@ -259,11 +259,7 @@ export function ShellLayout() {
             <div className="niuu-shell__plugin-status">
               <PluginSlot render={active?.topbarRight ?? null} ctx={ctx} />
             </div>
-            <Popover
-              onOpenChange={(open) => {
-                if (!open) requestAnimationFrame(() => themeButton.current?.focus());
-              }}
-            >
+            <Popover>
               <PopoverTrigger asChild>
                 <button
                   type="button"
@@ -309,7 +305,10 @@ export function ShellLayout() {
                       type="button"
                       className="niuu-shell__theme-option"
                       aria-pressed={theme === value}
-                      onClick={() => changeTheme(value)}
+                      onClick={() => {
+                        changeTheme(value);
+                        requestAnimationFrame(() => themeButton.current?.focus());
+                      }}
                     >
                       {label}
                     </button>

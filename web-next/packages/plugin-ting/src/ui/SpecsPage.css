@@ -296,14 +296,18 @@
 [data-theme='light'] .specs-campaign-card__stage {
   color: var(--color-text-secondary);
 }
-[data-theme='light'] .specs-campaign-card__stage span {
+[data-theme='light'] .specs-campaign-card__stage span,
+[data-theme='light'] .specs-meta-list dt {
   color: var(--color-text-faint);
 }
-[data-theme='light'] .specs-campaign-card__stage strong {
+[data-theme='light'] .specs-campaign-card__stage strong,
+[data-theme='light'] .specs-panel-title {
   color: var(--color-text-primary);
 }
 [data-theme='light'] .specs-doc-pill,
-[data-theme='light'] .specs-review-pill {
+[data-theme='light'] .specs-review-pill,
+[data-theme='light'] .specs-doc-tab,
+[data-theme='light'] .specs-action-button {
   border: 1px solid var(--color-border-subtle);
   color: var(--color-text-secondary);
 }
@@ -320,10 +324,6 @@
 [data-theme='light'] .specs-doc-tabs {
   border-bottom: 1px solid var(--color-border-subtle);
 }
-[data-theme='light'] .specs-doc-tab {
-  border: 1px solid var(--color-border-subtle);
-  color: var(--color-text-secondary);
-}
 [data-theme='light'] .specs-doc-tab.is-active {
   border-color: color-mix(in srgb, var(--color-brand) 55%, transparent);
   background: color-mix(in srgb, var(--color-brand) 12%, transparent);
@@ -335,21 +335,14 @@
   border: 1px solid var(--color-border-subtle);
   background: var(--color-bg-secondary);
 }
-[data-theme='light'] .specs-panel-title {
-  color: var(--color-text-primary);
-}
-[data-theme='light'] .specs-meta-list dt {
-  color: var(--color-text-faint);
-}
-[data-theme='light'] .specs-meta-list dd {
-  color: var(--color-text-secondary);
-}
+[data-theme='light'] .specs-meta-list dd,
 [data-theme='light'] .specs-markdown {
   color: var(--color-text-secondary);
 }
 [data-theme='light'] .specs-markdown h1,
 [data-theme='light'] .specs-markdown h2,
-[data-theme='light'] .specs-markdown h3 {
+[data-theme='light'] .specs-markdown h3,
+[data-theme='light'] .specs-review-notes h3 {
   color: var(--color-text-primary);
 }
 [data-theme='light'] .specs-markdown code {
@@ -361,9 +354,6 @@
   border: 1px solid var(--color-border-subtle);
   background: var(--color-bg-primary);
 }
-[data-theme='light'] .specs-review-notes h3 {
-  color: var(--color-text-primary);
-}
 [data-theme='light'] .specs-review-notes p {
   color: var(--color-text-secondary);
 }
@@ -374,10 +364,6 @@
   border: 1px solid var(--color-border-subtle);
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
-}
-[data-theme='light'] .specs-action-button {
-  border: 1px solid var(--color-border-subtle);
-  color: var(--color-text-secondary);
 }
 [data-theme='light'] .specs-action-button.is-primary {
   border-color: color-mix(in srgb, var(--color-brand) 50%, transparent);
